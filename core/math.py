@@ -1,5 +1,6 @@
 from typing import Callable
 import numpy as np
+from geom import Point
 from math import sqrt, exp
 
 EPS = 2.2e-15
@@ -11,8 +12,14 @@ class IntegrationResult:
         self.vals = [0.0]
         self.sums = [0.0]
         self.total_sum = 0.0
+    
+    def interpolate(self, t:float)->float:
+        return np.interp(x=t, xp=self.vals, fp=self.sums, left=self.sums[0], right=self.total_sum)
+    
+    def inverse_interpolate(self, t:float)->float:
+        return np.interp(x=t, xp=self.sums, fp=self.vals, left=self.vals[0], right=self.vals[-1])
 
-def integrate(a:float, b:float, f:Callable[[float], float], eps=EPS)->IntegrationResult:
+def integrate(a:float, b:float, f:Callable[[float], float], eps=EPS, maxJump = 100000.0)->IntegrationResult:
     result = IntegrationResult()
     f = np.vectorize(f)
 
@@ -26,7 +33,7 @@ def integrate(a:float, b:float, f:Callable[[float], float], eps=EPS)->Integratio
         m = (a+b) / 2
         i1 = five_point(a, m)
         i2 = five_point(m, b)
-        if(abs(i - (i1 + i2)) <= eps):
+        if(abs(i - (i1 + i2)) <= eps and abs(i1) <= maxJump and abs(i2) <= maxJump):
             result.vals.append(m)
             result.sums.append(result.sums[-1] + i1)
             result.vals.append(b)
@@ -38,3 +45,7 @@ def integrate(a:float, b:float, f:Callable[[float], float], eps=EPS)->Integratio
     helper(a, b, five_point(a, b), result)
     result.total_sum = result.sums[-1]
     return result
+
+def arc_length(a:float, b:float, df:Callable[[float], Point]):
+    f = lambda t : sqrt(1 + df(t)**2)
+    return integrate(a, b, f, maxJump=0.01)

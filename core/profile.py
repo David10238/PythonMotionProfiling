@@ -8,7 +8,7 @@ class MotionState():
         self.vel = vel
         self.acc = acc
 
-    def interp(self, t:float)->MotionState:
+    def interpolate(self, t:float)->MotionState:
         return MotionState(
             x = (self.x) + (t*self.vel) + (t**2*self.acc/2.0),
             vel = (self.vel) + (self.acc*t),
@@ -19,13 +19,13 @@ class MotionState():
 class MotionStage():
     def __init__(self, start:MotionState, duration:float) -> None:
         self.start = start
-        self.end = start.interp(t = duration)
+        self.end = start.interpolate(t = duration)
         self.duration = duration
 
-    def interp(self, t:float)->MotionState:
+    def interpolate(self, t:float)->MotionState:
         if t > self.duration:
             return self.head
-        return self.start.interp(t)
+        return self.start.interpolate(t)
 
     def flipped(self)-> MotionState:
         return MotionStage(MotionState(self.end.x, -self.end.vel, self.end.acc), self.duration)
@@ -39,10 +39,10 @@ class MotionProfile:
         for stage in stages:
             self.duration += stage.duration
 
-    def interp(self, t:float)->MotionState:
+    def interpolate(self, t:float)->MotionState:
         for stage in self._stages:
             if(t < stage.duration):
-                return stage.interp(t)
+                return stage.interpolate(t)
             t -= stage.duration
         return self.end
 
